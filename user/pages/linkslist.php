@@ -122,7 +122,7 @@ function linkstats_page_url( $paged, $per_page ) {
             text-align: center;
             margin-bottom: 0.5rem;
         }
-        .logo-wrap img { height: 100px; }
+        .logo-wrap img { max-width: 100%; height: auto; }
         .logo-wrap h2  { margin: 0.25rem 0 1rem; }
         .copy-tip {
             margin-bottom: 0.5rem;
