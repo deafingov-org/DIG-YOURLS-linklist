@@ -30,8 +30,23 @@ $table_stat = YOURLS_DB_PREFIX . 'linkstat';
 $logo_url     = yourls_get_option( 'linkstats_logo_url' )     ?: $site . '/user/files/logo.png';
 $page_title   = yourls_get_option( 'linkstats_page_title' )   ?: 'Links &mdash; YOURLS';
 $page_heading = yourls_get_option( 'linkstats_page_heading' ) ?: 'List of Links';
-$logo_width   = (int) yourls_get_option( 'linkstats_logo_width' );
-$logo_height  = (int) yourls_get_option( 'linkstats_logo_height' );
+$logo_width       = (int) yourls_get_option( 'linkstats_logo_width' );
+$logo_height      = (int) yourls_get_option( 'linkstats_logo_height' );
+$footer_bg_color  = yourls_get_option( 'linkstats_footer_bg_color' )  ?: '#9b1c1c';
+$footer_tx_color  = yourls_get_option( 'linkstats_footer_tx_color' )  ?: '#ffffff';
+$footer_host_text = yourls_get_option( 'linkstats_footer_host_text' ) ?: '';
+$footer_host_url  = yourls_get_option( 'linkstats_footer_host_url' )  ?: '';
+
+// Build footer HTML
+$footer_html = 'Powered by <a href="https://yourls.org" target="_blank">YOURLS</a>';
+if ( $footer_host_text ) {
+    $footer_html .= ' &mdash; Hosted by ';
+    if ( $footer_host_url ) {
+        $footer_html .= '<a href="' . yourls_esc_url( $footer_host_url ) . '" target="_blank">' . yourls_esc_html( $footer_host_text ) . '</a>';
+    } else {
+        $footer_html .= yourls_esc_html( $footer_host_text );
+    }
+}
 
 // Build logo size attribute string
 $logo_size_attr = '';
@@ -174,7 +189,6 @@ function linkstats_page_url( $paged, $per_page ) {
         .pagination span.disabled { color: #bbb; border-color: #e0e0e0; }
         site-footer {
             display: block;
-            background: #9b1c1c;
             color: #fff;
             text-align: center;
             padding: 0.6rem 1rem;
@@ -280,9 +294,8 @@ function linkstats_page_url( $paged, $per_page ) {
     <?php endif; ?>
 </div>
 
-<site-footer>
-    Powered by <a href="https://yourls.org" target="_blank">YOURLS</a> &mdash;
-    Hosted by <a href="https://www.dreamhost.com" target="_blank">DreamHost</a>
+<site-footer style="background:<?php echo yourls_esc_attr( $footer_bg_color ); ?>;color:<?php echo yourls_esc_attr( $footer_tx_color ); ?>;">
+    <?php echo $footer_html; ?>
 </site-footer>
 
 <script>

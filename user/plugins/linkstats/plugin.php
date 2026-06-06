@@ -165,7 +165,11 @@ function linkstats_admin_page() {
         $logo_height = isset( $_POST['linkstats_logo_height'] ) ? (int) $_POST['linkstats_logo_height'] : 0;
         yourls_update_option( 'linkstats_logo_width',   $logo_width  > 0 ? $logo_width  : '' );
         yourls_update_option( 'linkstats_logo_height',  $logo_height > 0 ? $logo_height : '' );
-        yourls_update_option( 'linkstats_logo_ratio',   isset( $_POST['linkstats_logo_ratio'] ) ? 1 : 0 );
+        yourls_update_option( 'linkstats_logo_ratio',      isset( $_POST['linkstats_logo_ratio'] ) ? 1 : 0 );
+        yourls_update_option( 'linkstats_footer_bg_color', trim( $_POST['linkstats_footer_bg_color'] ?? '#9b1c1c' ) );
+        yourls_update_option( 'linkstats_footer_tx_color', trim( $_POST['linkstats_footer_tx_color'] ?? '#ffffff' ) );
+        yourls_update_option( 'linkstats_footer_host_text',trim( $_POST['linkstats_footer_host_text'] ?? '' ) );
+        yourls_update_option( 'linkstats_footer_host_url', trim( $_POST['linkstats_footer_host_url']  ?? '' ) );
         echo '<p style="color:green;font-weight:bold;">&#10003; Settings saved.</p>';
     }
 
@@ -210,15 +214,19 @@ function linkstats_admin_page() {
 
     if ( $active_tab === 'settings' ) {
         // ---- PAGE SETTINGS TAB ----
-        $logo_url     = yourls_get_option( 'linkstats_logo_url' )     ?: '';
-        $page_title   = yourls_get_option( 'linkstats_page_title' )   ?: '';
-        $page_heading = yourls_get_option( 'linkstats_page_heading' ) ?: '';
-        $logo_width   = (int) yourls_get_option( 'linkstats_logo_width' );
-        $logo_height  = (int) yourls_get_option( 'linkstats_logo_height' );
-        $keep_ratio   = yourls_get_option( 'linkstats_logo_ratio' );
+        $logo_url      = yourls_get_option( 'linkstats_logo_url' )     ?: '';
+        $page_title    = yourls_get_option( 'linkstats_page_title' )   ?: '';
+        $page_heading  = yourls_get_option( 'linkstats_page_heading' ) ?: '';
+        $logo_width    = (int) yourls_get_option( 'linkstats_logo_width' );
+        $logo_height   = (int) yourls_get_option( 'linkstats_logo_height' );
+        $keep_ratio    = yourls_get_option( 'linkstats_logo_ratio' );
         $keep_ratio_checked = ( (string) $keep_ratio === '' || (int) $keep_ratio === 1 ) ? 'checked' : '';
-        $heading_text = $page_heading ?: 'List of Links';
-        $nonce        = yourls_create_nonce( 'linkstats_settings' );
+        $heading_text  = $page_heading ?: 'List of Links';
+        $footer_bg_color  = yourls_get_option( 'linkstats_footer_bg_color' )  ?: '#9b1c1c';
+        $footer_tx_color  = yourls_get_option( 'linkstats_footer_tx_color' )  ?: '#ffffff';
+        $footer_host_text = yourls_get_option( 'linkstats_footer_host_text' ) ?: '';
+        $footer_host_url  = yourls_get_option( 'linkstats_footer_host_url' )  ?: '';
+        $nonce            = yourls_create_nonce( 'linkstats_settings' );
 
         // --- Inline CSS (adapted from LogoSuite) ---
         echo '<style>
@@ -312,7 +320,65 @@ function linkstats_admin_page() {
         echo '<h2 id="ls-heading-preview" style="margin:0;font-size:1.4em;">' . yourls_esc_html( $heading_text ) . '</h2>';
         echo '</div>';
 
-        echo '</div>'; // .ls-panel
+        echo '</div>'; // .ls-panel (Page Text Settings)
+
+        // --- Footer Settings panel ---
+        // Build preview footer text
+        $preview_footer = 'Powered by YOURLS (linked)';
+        if ( $footer_host_text ) {
+            $preview_footer .= ' &mdash; Hosted by ' . yourls_esc_html( $footer_host_text );
+        }
+
+        echo '<div class="ls-panel">';
+        echo '<h3>Footer Settings</h3>';
+
+        // Helper to render a color picker row with RGB inputs
+        // bg color
+        echo '<div class="ls-form-row">';
+        echo '<label>Background Color</label>';
+        echo '<small>Pick a color or enter RGB values. Default: #9b1c1c (dark red)</small>';
+        echo '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;">';
+        echo '<input type="color" name="linkstats_footer_bg_color" id="ls_footer_bg" value="' . yourls_esc_attr( $footer_bg_color ) . '" style="width:48px;height:36px;padding:2px;border:1px solid #c7d8e4;border-radius:6px;cursor:pointer;" oninput="ls_sync_picker(\'bg\',this.value)" />';
+        echo '<div style="display:flex;align-items:center;gap:6px;">';
+        echo '<span style="font-size:.8rem;color:#555;">R</span><input type="number" id="ls_bg_r" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'bg\')" />';
+        echo '<span style="font-size:.8rem;color:#555;">G</span><input type="number" id="ls_bg_g" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'bg\')" />';
+        echo '<span style="font-size:.8rem;color:#555;">B</span><input type="number" id="ls_bg_b" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'bg\')" />';
+        echo '</div></div>';
+        echo '</div>';
+
+        // text color
+        echo '<div class="ls-form-row">';
+        echo '<label>Text Color</label>';
+        echo '<small>Pick a color or enter RGB values. Default: #ffffff (white)</small>';
+        echo '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;">';
+        echo '<input type="color" name="linkstats_footer_tx_color" id="ls_footer_tx" value="' . yourls_esc_attr( $footer_tx_color ) . '" style="width:48px;height:36px;padding:2px;border:1px solid #c7d8e4;border-radius:6px;cursor:pointer;" oninput="ls_sync_picker(\'tx\',this.value)" />';
+        echo '<div style="display:flex;align-items:center;gap:6px;">';
+        echo '<span style="font-size:.8rem;color:#555;">R</span><input type="number" id="ls_tx_r" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'tx\')" />';
+        echo '<span style="font-size:.8rem;color:#555;">G</span><input type="number" id="ls_tx_g" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'tx\')" />';
+        echo '<span style="font-size:.8rem;color:#555;">B</span><input type="number" id="ls_tx_b" min="0" max="255" style="width:56px;height:30px;border:1px solid #c7d8e4;border-radius:6px;padding:0 6px;font-size:.8rem;" oninput="ls_sync_rgb(\'tx\')" />';
+        echo '</div></div>';
+        echo '</div>';
+
+        // webhost fields
+        echo '<div class="ls-form-row">';
+        echo '<label for="linkstats_footer_host_text">Webhost Display Text</label>';
+        echo '<small>Name of your hosting provider shown in the footer. e.g. "DreamHost". Leave blank to omit.</small>';
+        echo '<input type="text" name="linkstats_footer_host_text" id="linkstats_footer_host_text" value="' . yourls_esc_attr( $footer_host_text ) . '" placeholder="DreamHost" />';
+        echo '</div>';
+
+        echo '<div class="ls-form-row">';
+        echo '<label for="linkstats_footer_host_url">Webhost URL</label>';
+        echo '<small>Full URL for the hosting provider link. e.g. "https://www.dreamhost.com". Leave blank to show text only.</small>';
+        echo '<input type="text" name="linkstats_footer_host_url" id="linkstats_footer_host_url" value="' . yourls_esc_attr( $footer_host_url ) . '" placeholder="https://www.dreamhost.com" />';
+        echo '</div>';
+
+        // live preview
+        echo '<div class="ls-form-row">';
+        echo '<label>Footer Preview</label>';
+        echo '<div id="ls-footer-preview" style="padding:10px 16px;border-radius:6px;text-align:center;font-size:.85rem;background:' . yourls_esc_attr( $footer_bg_color ) . ';color:' . yourls_esc_attr( $footer_tx_color ) . ';">' . $preview_footer . '</div>';
+        echo '</div>';
+
+        echo '</div>'; // .ls-panel (Footer Settings)
 
         echo '<p><button type="submit" class="button button-primary">&#128190; Save Settings</button></p>';
         echo '</form>';
@@ -431,6 +497,12 @@ function linkstats_admin_page() {
             e.headingPrev.textContent = this.value || 'List of Links';
         });
 
+        // Init footer color RGB fields from stored hex values
+        var bgPicker = document.getElementById('ls_footer_bg');
+        var txPicker = document.getElementById('ls_footer_tx');
+        if (bgPicker) ls_sync_picker('bg', bgPicker.value);
+        if (txPicker) ls_sync_picker('tx', txPicker.value);
+
         // Init preview if URL already set
         if (e.preview && !e.preview.classList.contains('ls-preview-hidden') && e.preview.complete && e.preview.naturalWidth > 0) {
             onPreviewLoad();
@@ -439,6 +511,56 @@ function linkstats_admin_page() {
         }
     });
 })();
+
+// --- Footer color helpers ---
+function ls_hex_to_rgb(hex) {
+    hex = hex.replace('#','');
+    if (hex.length === 3) hex = hex.split('').map(function(c){return c+c;}).join('');
+    return {
+        r: parseInt(hex.substring(0,2),16),
+        g: parseInt(hex.substring(2,4),16),
+        b: parseInt(hex.substring(4,6),16)
+    };
+}
+function ls_rgb_to_hex(r,g,b) {
+    return '#'+[r,g,b].map(function(v){
+        return Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0');
+    }).join('');
+}
+// channel = 'bg' or 'tx'
+function ls_sync_picker(channel, hex) {
+    var rgb = ls_hex_to_rgb(hex);
+    var set = function(id, val){ var el=document.getElementById(id); if(el) el.value=val; };
+    set('ls_'+channel+'_r', rgb.r);
+    set('ls_'+channel+'_g', rgb.g);
+    set('ls_'+channel+'_b', rgb.b);
+    ls_update_footer_preview();
+}
+function ls_sync_rgb(channel) {
+    var get = function(id){ return parseInt((document.getElementById(id)||{}).value,10)||0; };
+    var hex = ls_rgb_to_hex(get('ls_'+channel+'_r'), get('ls_'+channel+'_g'), get('ls_'+channel+'_b'));
+    var picker = document.getElementById('ls_footer_'+channel);
+    if (picker) picker.value = hex;
+    ls_update_footer_preview();
+}
+function ls_update_footer_preview() {
+    var preview = document.getElementById('ls-footer-preview');
+    if (!preview) return;
+    var bg = (document.getElementById('ls_footer_bg')||{}).value || '#9b1c1c';
+    var tx = (document.getElementById('ls_footer_tx')||{}).value || '#ffffff';
+    var host_text = (document.getElementById('linkstats_footer_host_text')||{}).value || '';
+    var text = 'Powered by YOURLS (linked)' + (host_text ? ' — Hosted by ' + (host_text || '') : '');
+    preview.style.background = bg;
+    preview.style.color = tx;
+    preview.textContent = text;
+}
+// Keep preview in sync while typing host fields
+document.addEventListener('DOMContentLoaded', function() {
+    ['linkstats_footer_host_text','linkstats_footer_host_url'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', ls_update_footer_preview);
+    });
+});
 </script>
 JS;
 
